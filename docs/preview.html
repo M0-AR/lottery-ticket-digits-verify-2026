@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Winning Tickets on 8×8 Digits — Interactive Companion</title>
+<meta name="description" content="From-scratch replication of the Lottery Ticket Hypothesis on 1797 handwritten digits. Delete 49 of every 50 connections and still read 96% — but only with the original numbers.">
+<style>
+:root{--bg:#0b1020;--card:#141b33;--ink:#e8ecf8;--mut:#9aa4c7;--acc:#5aa2ff;--ok:#34d399;--warn:#fbbf24}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;color:var(--ink);background:radial-gradient(1200px 600px at 20% -10%,#1b2a5e,transparent),radial-gradient(900px 500px at 110% 10%,#3b1d5e,transparent),var(--bg);line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding:24px}
+.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:center;padding:28px 0}
+@media(max-width:860px){.hero{grid-template-columns:1fr}}
+h1{font-size:clamp(28px,4vw,48px);line-height:1.08;margin:.2em 0}
+.sub{color:var(--mut);font-size:18px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:20px}
+.badges img{margin-right:6px}
+.btn{display:inline-block;background:var(--acc);color:#06122b;font-weight:700;padding:12px 18px;border-radius:12px;text-decoration:none;margin-right:10px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid rgba(255,255,255,.25)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.kpi{font-size:34px;font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.1);text-align:left}
+th{color:var(--mut);font-weight:600}
+img.resp{width:100%;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:#0e1430}
+.quiz button{display:block;width:100%;text-align:left;margin:8px 0;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:#0e1530;color:var(--ink);cursor:pointer}
+.quiz button.correct{border-color:var(--ok);background:rgba(52,211,153,.15)}
+.quiz button.wrong{border-color:#f87171;background:rgba(248,113,113,.12)}
+.step{display:flex;gap:12px;margin:12px 0}.n{flex:0 0 34px;height:34px;border-radius:50%;background:var(--acc);color:#06122b;font-weight:800;display:flex;align-items:center;justify-content:center}
+footer{color:var(--mut);font-size:13px;padding:30px 0}
+code{background:rgba(255,255,255,.08);padding:2px 6px;border-radius:6px}
+pre{background:#0a0f24;border:1px solid rgba(255,255,255,.12);padding:14px;border-radius:12px;overflow:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="badges">
+    <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT">
+    <img src="https://img.shields.io/badge/Python-3.11-blue.svg" alt="python">
+    <img src="https://img.shields.io/badge/Docker-ready-blue.svg" alt="docker">
+    <img src="https://img.shields.io/badge/NumPy-only-orange.svg" alt="numpy">
+    <img src="https://img.shields.io/badge/Reproduced-3_runs-34d399.svg" alt="reproduced">
+  </p>
+  <div class="hero">
+    <div>
+      <h1>Delete 49 of every 50 wires.<br>Still read 96% of digits.</h1>
+      <p class="sub"><b>Summary:</b> A 50,200-connection network reads handwritten digits at 97.3%. Delete the smallest weights little by little, rewind survivors to their very first random numbers, repeat 18 times — 1,045 wires remain and accuracy is 96.0%. Same 1,045 wires with <i>fresh</i> random numbers: 86.5%. The secret is not the size of the numbers. It is their <b>plus / minus signs</b>, because one wrong minus kills a whole unit forever.</p>
+      <p>
+        <a class="btn" href="#quiz">Take the 2-minute quiz</a>
+        <a class="btn ghost" href="#quickstart">Run it in 65 seconds</a>
+      </p>
+      <p class="sub">Public real data: 1,797 pictures, 8×8. No synthetic data. Laptop CPU. Every number below is measured in <code>results/results.json</code>.</p>
+    </div>
+    <div class="card">
+      <img class="resp" src="demo.gif" alt="Pruning animation: accuracy holds while connections shrink">
+      <p class="sub">Watch: round by round, connections collapse (log scale) while accuracy stays flat. This is the whole paper in 10 seconds.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="kpi">96.0%</div><div>Ticket @1,045 conns (2.08%)<br><span style="color:var(--mut)">Dense 97.3% · New-start 86.5%</span></div></div>
+    <div class="card"><div class="kpi">83% → 9%</div><div>Untrained ticket vs fresh<br><span style="color:var(--mut)">Pruning did part of training</span></div></div>
+    <div class="card"><div class="kpi">11 vs 42</div><div>Dead units: ticket vs fresh<br><span style="color:var(--mut)">One minus kills a unit</span></div></div>
+  </div>
+
+  <h2 id="beginner">🌱 Beginner guide — read this and you are a professional</h2>
+  <div class="card"><p><b>Let's work this out in a step-by-step way to be sure we have the right answer.</b></p>
+    <div class="step"><div class="n">1</div><div><b>A connection = one number.</b> Picture squares (64 numbers 0–1) flow through wires. Each wire multiplies and adds. If the sum &lt; 0, the unit outputs 0 (ReLU). Highest of 10 outputs wins. Start: all numbers random → 1 in 10 correct (guessing).</div></div>
+    <div class="step"><div class="n">2</div><div><b>Training = nudge numbers.</b> Show 60 pictures, move every number a little toward the right answer. 1,500 steps on 1,000 pictures. Test on 500 never seen → 97.3%.</div></div>
+    <div class="step"><div class="n">3</div><div><b>Pruning = delete smallest.</b> Near-zero wires change almost nothing. Delete smallest 20%, rewind survivors to their <i>first</i> numbers, train again. Repeat 18× → 1,045 left → 96.0%.</div></div>
+    <div class="step"><div class="n">4</div><div><b>The twist.</b> Keep places, throw numbers away, draw new random ones → 86.5% and slower. Keep numbers, pick random places → ~18%. You need <i>both</i> the right places <i>and</i> the numbers they started with.</div></div>
+    <div class="step"><div class="n">5</div><div><b>Why signs?</b> Squares are never negative. A unit with one wire and a minus sign outputs 0 for <i>every</i> picture → no gradient → dead forever. Fresh coins kill ~42/136 units before step 0. The ticket kept 74% plus → only ~11 dead. Flip all signs → blind (10–33%). Keep signs + any size → 96%.</div></div>
+    <div class="step"><div class="n">6</div><div><b>You know more than most interview candidates</b> if you can say: <i>iterative beats one-shot by ~6 points; magnitude-at-init overlaps ~20%; small-dense 64–14–10 hits 96.2% so the ticket is not a better small net, just a sparse one with a sign fragility.</i></div></div>
+  </div>
+
+  <h2>What you can use this repo for</h2>
+  <div class="grid">
+    <div class="card"><b>🎓 Students</b><br>Learn backprop, pruning, ReLU death with zero framework magic. Change one flag (zero-mean inputs, LeakyReLU, fan-in floor) and watch the gap move — proposed as Experiments E1–E3.</div>
+    <div class="card"><b>💼 Engineers</b><br>Copy the masked-SGD + IMP loop as a compression audit template. Benchmark sparsity vs accuracy on your own tabular data in minutes.</div>
+    <div class="card"><b>🔬 Researchers</b><br>Extend to 10 runs, MNIST/CIFAR, late-rewinding, Supermask-only. All seeds, splits, JSON artifacts fixed. Start from <code>PAPER.md</code>.</div>
+  </div>
+
+  <h2>Results (measured, 3 runs)</h2>
+  <div class="card">
+  <table>
+  <tr><th>Condition</th><th>This repo</th><th>Reference telling</th></tr>
+  <tr><td>Dense 50,200</td><td>97.0 / 97.2 / 97.8</td><td>98.2 mean/10</td></tr>
+  <tr><td>Ticket @1,045 (r18)</td><td>95.8 / 96.2 / 96.0</td><td>96.6 @1037</td></tr>
+  <tr><td>New-start @1,045</td><td>84.4 / 86.2 / 89.0</td><td>gap opens only at sparsity</td></tr>
+  <tr><td>Random mask</td><td>16.8–19.4</td><td>places alone fail</td></tr>
+  <tr><td>Untrained ticket / fresh</td><td>79–88% vs ~9%</td><td>masking ≈ training</td></tr>
+  <tr><td>Small-dense 1,036</td><td>96.0 / 96.4 / 96.2</td><td>ordinary small net matches</td></tr>
+  </table>
+  </div>
+  <p><img class="resp" src="accuracy_vs_sparsity.png" alt="accuracy vs sparsity"></p>
+  <p><img class="resp" src="ticket_vs_new.png" alt="ticket vs new start"></p>
+  <p><img class="resp" src="signs.png" alt="sign ablations"></p>
+  <p><img class="resp" src="dead_units.png" alt="dead units"></p>
+  <p><img class="resp" src="digits.png" alt="digit samples"></p>
+
+  <h2 id="quiz">🎯 Interactive quiz — from scratch to pro (with answers)</h2>
+  <div class="card quiz" id="quizbox">
+    <p>Click an answer. You need 5/6 to call yourself pro. Every answer is demonstrated by code in this repo.</p>
+    <div id="q"></div>
+    <p><b id="score">Score: 0 / 6</b> <span id="msg"></span></p>
+    <button id="reset" style="width:auto">Restart quiz</button>
+  </div>
+
+  <h2 id="quickstart">🚀 Quickstart (65 s on a laptop)</h2>
+  <div class="card"><pre>pip install -r requirements.txt
+python -m src.exercise --rounds 3 --runs 3        # 1-minute question: guess, then run
+python -m src.run_all --rounds 18 --runs 3 --steps 1500   # full benchmark -&gt; results/results.json
+python tools/make_assets.py                        # regenerate docs/*.png + docs/demo.gif
+pytest tests/ -q
+docker compose up lottery</pre>
+  <p>🌐 <b>View as a website (GitHub Pages):</b> Settings → Pages → Deploy from branch → Branch: <code>main</code> → Folder: <code>/ (root)</code> or <code>/docs</code> → Save. Then open <a href="https://m0-ar.github.io/lottery-ticket-digits-verify-2026/">/</a> · <a href="https://m0-ar.github.io/lottery-ticket-digits-verify-2026/preview.html">/preview.html</a> · <a href="https://m0-ar.github.io/lottery-ticket-digits-verify-2026/docs/preview.html">/docs/preview.html</a>. No build step: <code>preview.html</code> + <code>docs/</code> are pure static files.</p>
+  </div>
+
+  <h2>Features</h2>
+  <div class="card"><table>
+  <tr><th>Feature</th><th>What it is</th></tr>
+  <tr><td>🔢 Exact 50,200 MLP</td><td>64–300–100–10, no biases, NumPy only, He init. Count matches connection for connection.</td></tr>
+  <tr><td>✂️ Iterative pruning + rewind</td><td>20%/round (10% output), rewind to first numbers, 0–22 rounds. One-shot + random-mask + mag-at-init included.</td></tr>
+  <tr><td>➕➖ Sign laboratory</td><td>keep-sign/new-size, same-size, new-sign, flip-all. Proves signs carry the ticket.</td></tr>
+  <tr><td>💀 Dead-unit microscope</td><td>Counts absorbing ReLUs, plus-fraction, single-wire units, sign preservation, untrained accuracy.</td></tr>
+  <tr><td>📊 Measured benchmarks</td><td>Dense, IMP curve, ticket vs new, small-dense, ablations → <code>results/results.json</code>.</td></tr>
+  <tr><td>🎁 Exercise + quiz</td><td><code>src/exercise.py</code> (3-round question) + this page's 6-question interactive quiz.</td></tr>
+  <tr><td>🐳 One-command repro</td><td><code>Dockerfile</code> + <code>docker-compose.yml</code>. Pinned deps, fixed seeds.</td></tr>
+  </table></div>
+
+  <footer>MIT · Public real data only (1,797 digits) · Reproduce: <code>python -m src.run_all --rounds 18 --runs 3</code> · Companion to README.md + PAPER.md</footer>
+</div>
+<script>
+const QS=[
+{q:"You delete half the connections (smallest ones). What happens?",o:["Accuracy collapses to guessing","Almost nothing (about 97%)","It doubles to 198%"],a:1,e:"Half deleted: 98.0 vs 98.2 in the telling; here ~97.1 vs 97.3. Near-zero wires change almost nothing."},
+{q:"1,045 wires left (2%). Ticket (first numbers) vs same wires with FRESH numbers?",o:["Fresh wins","Ticket wins by ~10 points","Tie always"],a:1,e:"Measured: ticket ~96.0%, fresh ~86.5%. Same places, different numbers."},
+{q:"What matters most in the first numbers?",o:["Exact sizes","Plus/minus signs","The file name"],a:1,e:"Keep-sign/new-size 95%+, flip-all 10–33% (blind). Sizes hardly matter."},
+{q:"Why does a fresh minus kill a single-wire unit?",o:["Inputs are never negative + ReLU outputs 0 forever, no gradient","Minus numbers are illegal","The computer dislikes minus"],a:0,e:"x>=0, w<0 -> sum<=0 -> ReLU 0 for every picture -> gradient 0 -> never corrected."},
+{q:"Ticket BEFORE any training already reads?",o:["~10% (guess)","~83%","100%"],a:1,e:"Untrained ticket 79–88% vs fresh ~9%. Deleting did part of training."},
+{q:"Ordinary small net 64-14-10 (1,036 wires) scores?",o:["~50%","~96% in one training","Cannot train"],a:1,e:"96.0–96.4%. Small nets learn fine when every unit has many wires."}
+];
+let idx=0,score=0,done=Array(QS.length).fill(false);
+const qb=document.getElementById('q'),sc=document.getElementById('score'),msg=document.getElementById('msg');
+function render(){
+ const Q=QS[idx];
+ qb.innerHTML=`<p><b>Q${idx+1}/6:</b> ${Q.q}</p>`+Q.o.map((t,i)=>`<button data-i="${i}">${String.fromCharCode(65+i)}. ${t}</button>`).join('')+`<p style="color:#9aa4c7">${Q.e && done[idx] ? '✓ '+Q.e : ''}</p><p><button id="nav" style="width:auto">${idx<5?'Next →':'See result'}</button></p>`;
+ qb.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{
+   if(done[idx])return;
+   const i=+b.dataset.i;
+   if(i===Q.a){b.classList.add('correct');score++;msg.textContent=' — correct.';}
+   else{b.classList.add('wrong');qb.querySelector(`button[data-i="${Q.a}"]`).classList.add('correct');msg.textContent=' — not quite, see why above after Next.';}
+   done[idx]=true;sc.textContent=`Score: ${score} / 6`;
+   render_explain();
+ });
+ const nv=document.getElementById('nav');if(nv)nv.onclick=()=>{idx=(idx+1)%6;if(idx===0&&done.every(Boolean)){msg.textContent=score>=5?' — pro certified. You beat most interview answers.':' — retry: read the Beginner guide once more.';}render();};
+}
+function render_explain(){
+ const Q=QS[idx];
+ const p=qb.querySelector('p:last-of-type');
+}
+document.getElementById('reset').onclick=()=>{idx=0;score=0;done=Array(QS.length).fill(false);sc.textContent='Score: 0 / 6';msg.textContent='';render();};
+render();
+</script>
+</body>
+</html>

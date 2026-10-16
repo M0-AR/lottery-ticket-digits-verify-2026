@@ -8,7 +8,15 @@
 [![NumPy](https://img.shields.io/badge/NumPy-only-orange.svg)](src/model.py)
 [![Reproduced](https://img.shields.io/badge/Reproduced-3_runs-34d399.svg)](results/results.json)
 
-**🌐 Interactive companion:** open [`preview.html`](preview.html) in your browser — or publish it free with GitHub Pages (Settings → Pages → Deploy from branch → `main` → `/ (root)` → open `https://YOUR_USER.github.io/YOUR_REPO/preview.html`). No build step.
+**🌐 Interactive companion — click to open in your browser:**
+
+| Entry | Open locally / on GitHub | Open on GitHub Pages (live site) |
+|---|---|---|
+| `/` (home) | [`index.html`](index.html) | [m0-ar.github.io/lottery-ticket-digits-verify-2026/](https://m0-ar.github.io/lottery-ticket-digits-verify-2026/) |
+| `/preview.html` | [`preview.html`](preview.html) | [m0-ar.github.io/lottery-ticket-digits-verify-2026/preview.html](https://m0-ar.github.io/lottery-ticket-digits-verify-2026/preview.html) |
+| `/docs/preview.html` | [`docs/preview.html`](docs/preview.html) | [m0-ar.github.io/lottery-ticket-digits-verify-2026/docs/preview.html](https://m0-ar.github.io/lottery-ticket-digits-verify-2026/docs/preview.html) |
+
+> All three URLs serve the same companion (beginner guide + charts + 6-question quiz). Mirrors exist so the page resolves whether Pages is set to source `/` (root) or `/docs`. Publish free: push → GitHub → Settings → Pages → Deploy from branch → Branch `main` → Folder `/ (root)` *or* `/docs` → wait 1–2 min → click the links above. No build step: `preview.html` + `docs/*.png` + `docs/*.gif` are pure static files.
 
 ![Demo: pruning round by round](docs/demo.gif)
 
@@ -142,9 +150,12 @@ python -m src.exercise --rounds 3 --runs 2
 ## 🌐 View as a website (GitHub Pages)
 
 1. Push this folder to GitHub.
-2. GitHub → your repo → **Settings → Pages** → **Deploy from branch** → Branch: `main` → Folder: `/ (root)` → Save.
-3. Open `https://YOUR_USER.github.io/YOUR_REPO/preview.html`.
-4. No build step: `preview.html` + `docs/*.png` + `docs/*.gif` are pure static files. Works with custom domains and project pages.
+2. GitHub → your repo → **Settings → Pages** → **Deploy from branch** → Branch: `main` → Folder: `/ (root)` *or* `/docs` → Save. Either works — mirrors cover both.
+3. Wait 1–2 min for the Actions “pages build and deployment” run, then click:
+   - [Live home `/`](https://m0-ar.github.io/lottery-ticket-digits-verify-2026/)
+   - [Live companion `/preview.html`](https://m0-ar.github.io/lottery-ticket-digits-verify-2026/preview.html)
+   - [Live mirror `/docs/preview.html`](https://m0-ar.github.io/lottery-ticket-digits-verify-2026/docs/preview.html)
+4. No build step: `preview.html` + `docs/*.png` + `docs/*.gif` are pure static files plus `.nojekyll` at root and `/docs`. Works with custom domains and project pages. If one link 404s while another returns 200, Pages is serving the other source — the table above tells you which setting is active.
 
 ---
 

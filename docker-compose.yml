@@ -1,0 +1,11 @@
+services:
+  lottery:
+    build: .
+    volumes:
+      - ./results:/app/results
+    command: python src/run_all.py --rounds 18 --runs 3 --steps 1500
+  exercise:
+    build: .
+    volumes:
+      - ./results:/app/results
+    command: python src/exercise.py --rounds 3 --runs 3
